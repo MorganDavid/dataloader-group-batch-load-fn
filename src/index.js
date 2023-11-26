@@ -3,8 +3,8 @@ export { groupBatchLoadFn } from "./groupBatchLoadFn";
 /**
  * @template TKey, TValue
  * @callback BatchLoadFn
- * @param {Array<TKey>} keys
- * @returns {Promise<Array<TValue | Error>>}
+ * @param {ReadonlyArray<TKey>} keys
+ * @returns {PromiseLike<ArrayLike<TValue | Error>>}
  *
  */
 /**
