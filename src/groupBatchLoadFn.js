@@ -5,9 +5,9 @@ import { groupByObject } from "./groupByObject";
  * Groups all keys passed to it by object-hashing the result of `getStaticFields` on each key.
  * Then, it calls and awaits `groupedBatchLoadFn` once for every group of keys.
  * @template TKey, TValue
- * @param {GroupedBatchLoadFn<TKey, TValue>} groupedBatchLoadFn Must return an array of results where each element in the results corresponds to the element in the keys array with the same index.
- * @param {Options<TKey>} options getStaticFields is required in options.
- * @returns {BatchLoadFn<TKey, TValue>} A standard DataLoader BatchLoadFn to pass to a DataLoader constructor.
+ * @param {import(".").GroupedBatchLoadFn<TKey, TValue>} groupedBatchLoadFn Must return an array of results where each element in the results corresponds to the element in the keys array with the same index.
+ * @param {import(".").Options<TKey>} options getStaticFields is required in options.
+ * @returns {import(".").BatchLoadFn<TKey, TValue>} A standard DataLoader BatchLoadFn to pass to a DataLoader constructor.
  */
 export function groupBatchLoadFn(groupedBatchLoadFn, options) {
   if (!options) throw new Error("options missing");
@@ -18,7 +18,7 @@ export function groupBatchLoadFn(groupedBatchLoadFn, options) {
     throw new Error("options.getStaticFields is not a function");
 
   /**
-   * @type {BatchLoadFn<TKey, TValue>}
+   * @type {import(".").BatchLoadFn<TKey, TValue>}
    */
   const batchLoadFunction = async (keys) => {
     const grouped = groupByObject(keys, getStaticFields);
@@ -65,29 +65,3 @@ export function groupBatchLoadFn(groupedBatchLoadFn, options) {
 
   return batchLoadFunction;
 }
-
-/**
- * @template TKey, TValue
- * @callback BatchLoadFn
- * @param {Array<TKey>} keys
- * @returns {Promise<Array<TValue | Error>>}
- *
- */
-/**
- * @template TKey, TValue
- * @callback GroupedBatchLoadFn
- * @param {Array<TKey>} keys
- * @param {Partial<TKey>} staticFields
- * @returns {Promise<ArrayLike<TValue | Error>>}
- */
-/**
- * @template TKey
- * @callback GetStaticFields
- * @param {TKey} key
- * @returns {Partial<TKey>}
- */
-/**
- * @template TKey
- * @typedef {Object} Options
- * @property {GetStaticFields<TKey>} getStaticFields
- */
