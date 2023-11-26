@@ -6,21 +6,21 @@ import { groupByObject } from "./groupByObject";
  * Groups all keys passed to it by object hashing the result of `getStaticFields` on each key.
  * Then, it calls and awaits `groupedBatchLoadFn` once for every group of keys.
  * @template TKey, TValue
- * @param {GroupedBatchLoadFn<TKey, TValue>} groupedBatchLoadFn Must return an array of results where each element in
- *  the results corresponds to the element in the keys array with the same index.
- * @param {Options<TKey>} options getStaticFields is required in options.
- * @returns {BatchLoadFn<TKey, TValue>} A standard DataLoader BatchLoadFn to pass to a DataLoader constructor.
+ * @param {import("dataloader-group-batch-load-fn").GroupedBatchLoadFn<TKey, TValue>} groupedBatchLoadFn Must return an array of results where each element in
+ *   the results corresponds to the element in the keys array with the same index.
+ * @param {import("dataloader-group-batch-load-fn").Options<TKey>} options getStaticFields is required in options.
+ * @returns {import("dataloader-group-batch-load-fn").BatchLoadFn<TKey, TValue>} A standard DataLoader BatchLoadFn to pass to a DataLoader constructor.
  */
 export const groupBatchLoadFn = (groupedBatchLoadFn, options) => {
   if (!options) throw new Error("options missing");
 
-  const { getStaticFields } = options;
+  const getStaticFields = options.getStaticFields;
 
   if (typeof getStaticFields !== "function")
     throw new Error("options.getStaticFields is not a function");
 
   /**
-   * @type {BatchLoadFn<TKey, TValue>}
+   * @type {import("dataloader-group-batch-load-fn").BatchLoadFn<TKey, TValue>}
    */
   const batchLoadFunction = async (keys) => {
     const grouped = groupByObject(keys, getStaticFields);
