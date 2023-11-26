@@ -16,21 +16,21 @@ const products = {
   9: { id: 8, status: "SOLD", orderId: 4 },
 };
 
-const mockImplResolve = async (keys, staticFields) => {
-  console.log("mockImplResolve", keys, staticFields);
-  const out = keys.map((key) =>
+const getProductsByOrderIdAndStatusResolver = async (keys, staticFields) => {
+  // a query to the datastore would go here.
+  // static fields are fields which are the same for every value of `keys`
+  const resultsInTheSameOrderAsKeys = keys.map((key) =>
     Object.values(products).filter(
       (product) =>
         product.status === staticFields.status && key.id === product.orderId
     )
   );
-
-  console.log("resolve returning", out, " for keys, ", keys, staticFields);
-  return out;
+  return resultsInTheSameOrderAsKeys;
 };
 
-// getProductsByOrderIdAndStatus
-const resolve = vi.fn().mockImplementation(mockImplResolve);
+const mockGetProductsByOrderIdAndStatusResolver = vi
+  .fn()
+  .mockImplementation(getProductsByOrderIdAndStatusResolver);
 
 describe("groupedBatchLoadFn", () => {
   test("should group and resolve keys correctly", async () => {
@@ -39,7 +39,10 @@ describe("groupedBatchLoadFn", () => {
         status,
       }),
     };
-    const batchLoadFunction = groupedBatchLoadFn(resolve, options);
+    const batchLoadFunction = groupedBatchLoadFn(
+      mockGetProductsByOrderIdAndStatusResolver,
+      options
+    );
 
     const keys = [
       { id: 1, status: "BOUGHT" },
@@ -50,8 +53,6 @@ describe("groupedBatchLoadFn", () => {
       { id: 1, status: "BOUGHT" },
     ];
     const results = await batchLoadFunction(keys);
-    console.log(results);
-    console.log(results);
 
     expect(results).toEqual([
       [{ id: 1, status: "BOUGHT", orderId: 1 }],
@@ -65,8 +66,8 @@ describe("groupedBatchLoadFn", () => {
       [{ id: 1, status: "BOUGHT", orderId: 1 }],
     ]);
 
-    expect(resolve).toHaveBeenCalledTimes(3);
-    expect(resolve).toHaveBeenCalledWith(
+    expect(mockGetProductsByOrderIdAndStatusResolver).toHaveBeenCalledTimes(3);
+    expect(mockGetProductsByOrderIdAndStatusResolver).toHaveBeenCalledWith(
       [
         { id: 1, status: "BOUGHT" },
         { id: 2, status: "BOUGHT" },
@@ -75,29 +76,51 @@ describe("groupedBatchLoadFn", () => {
       ],
       { status: "BOUGHT" }
     );
-    expect(resolve).toHaveBeenCalledWith([{ id: 3, status: "SOLD" }], {
-      status: "SOLD",
-    });
+    expect(mockGetProductsByOrderIdAndStatusResolver).toHaveBeenCalledWith(
+      [{ id: 3, status: "SOLD" }],
+      {
+        status: "SOLD",
+      }
+    );
   });
 
-  test("should work correctly with the DataLoader library", async () => {
+  test("should return an error when the provided resolve function does not return an array with the same length as keys", async () => {
     const options = {
       getStaticFields: ({ status }) => ({
         status,
       }),
     };
 
-    const cacheKeyFn = objectHash;
+    // returns results which don't match the length of keys
+    const invalidResolver = async () => [1];
 
-    const batchLoadFunction = vi
-      .fn()
-      .mockImplementation(groupedBatchLoadFn(resolve, options));
-    resolve.mockReset().mockImplementation(mockImplResolve);
-
-    const dataLoader = new DataLoader(batchLoadFunction, { cacheKeyFn });
+    const batchLoadFunction = groupedBatchLoadFn(invalidResolver, options);
 
     const keys = [
       { id: 1, status: "BOUGHT" },
+      { id: 2, status: "BOUGHT" },
+      { id: 3, status: "BOUGHT" },
+      { id: 4, status: "SOLD" },
+    ];
+
+    await expect(batchLoadFunction(keys)).rejects.toEqual(
+      expect.objectContaining({
+        message:
+          "the length of the array returned by resolve() must be equal to the length of the keys array",
+      })
+    );
+  });
+
+  test("should work correctly with the DataLoader library", async () => {
+    const { dataLoader, mockBatchLoadFunction, mockResolve } =
+      constructDataLoaderWithMocks(
+        groupedBatchLoadFn,
+        mockGetProductsByOrderIdAndStatusResolver
+      );
+
+    const keys = [
+      { id: 1, status: "BOUGHT" },
+      { id: 2, status: "BOUGHT" },
       { id: 2, status: "BOUGHT" },
       { id: 3, status: "SOLD" },
       { id: 100, status: "BOUGHT" },
@@ -109,8 +132,10 @@ describe("groupedBatchLoadFn", () => {
 
     const results = await Promise.all(proms);
 
+    // it should return all the results in the same order as the keys
     expect(results).toEqual([
       [{ id: 1, status: "BOUGHT", orderId: 1 }],
+      [{ id: 4, status: "BOUGHT", orderId: 2 }],
       [{ id: 4, status: "BOUGHT", orderId: 2 }],
       [
         { id: 6, status: "SOLD", orderId: 3 },
@@ -121,7 +146,47 @@ describe("groupedBatchLoadFn", () => {
       [],
     ]);
 
-    expect(batchLoadFunction).toHaveBeenCalledTimes(1);
-    expect(resolve).toHaveBeenCalledTimes(3);
+    // it should only be called once by DataLoader.
+    expect(mockBatchLoadFunction).toHaveBeenCalledTimes(1);
+
+    // data loader should have removed the duplicate
+    expect(mockBatchLoadFunction).toHaveBeenCalledWith([
+      { id: 1, status: "BOUGHT" },
+      { id: 2, status: "BOUGHT" },
+      { id: 3, status: "SOLD" },
+      { id: 100, status: "BOUGHT" },
+      { id: 100, status: "INVALID" },
+      { id: 2, status: "INVALID" },
+    ]);
+
+    // it should be called as many times as there are statuses in the keys
+    expect(mockResolve).toHaveBeenCalledTimes(3);
+
+    const keysWithStatusBoughtAndDuplicatesRemoved = keys
+      .filter((k) => k.status === "BOUGHT")
+      .filter((_, index) => index !== 2);
+    expect(mockResolve).toHaveBeenCalledWith(
+      keysWithStatusBoughtAndDuplicatesRemoved,
+      { status: "BOUGHT" }
+    );
   });
 });
+
+const constructDataLoaderWithMocks = (groupedBatchLoadFn, resolve) => {
+  const options = {
+    getStaticFields: ({ status }) => ({
+      status,
+    }),
+  };
+
+  const cacheKeyFn = objectHash;
+  const mockResolve = vi.fn().mockImplementation(resolve);
+
+  const mockBatchLoadFunction = vi
+    .fn()
+    .mockImplementation(groupedBatchLoadFn(mockResolve, options));
+
+  const dataLoader = new DataLoader(mockBatchLoadFunction, { cacheKeyFn });
+
+  return { dataLoader, mockBatchLoadFunction, mockResolve };
+};
