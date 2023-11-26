@@ -1,8 +1,10 @@
 {
   "name": "dataloader-group-batch-load-fn",
   "scripts": {
-    "test": "vitest --coverage"
+    "test": "vitest --coverage",
+    "generate-types": "npx -p typescript tsc src/**/*.js --declaration --allowJs --emitDeclarationOnly --outDir types"
   },
+  "types": "./types",
   "version": "1.0.0",
   "main": "./src/index.js",
   "type": "module",
