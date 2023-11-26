@@ -1,11 +1,10 @@
 // @ts-check
 
 import { groupByObject } from "./groupByObject";
-import objectHash from "object-hash";
 
 /**
  * @template TKey, TValue
- * @param {(keys: ArrayLike<TKey>, staticFields: Partial<TKey>) => Promise<TValue | Error>} resolve
+ * @param {(keys: ArrayLike<TKey>, staticFields: Partial<TKey>) => Promise<ArrayLike<TValue | Error>>} resolve
  * @param {{ getStaticFields: (key: TKey) => Partial<TKey> }} options
  * @returns {BatchLoadFn<TKey, TValue>}
  */
@@ -23,33 +22,42 @@ export const groupedBatchLoadFn = (resolve, options) => {
   const batchLoadFunction = async (keys) => {
     const grouped = groupByObject(keys, getStaticFields);
 
-    const entries = Object.entries(grouped);
+    const values = Object.values(grouped);
 
     const queryResultsPartitionedByFilter = await Promise.all(
-      entries.map(async ([staticFieldsObjectHash, keys]) => {
-        return resolve(keys, getStaticFields(keys[0])).then((result) => ({
+      values.map(async (keysForThisGroup) => {
+        const keysWithoutIndex = keysForThisGroup.map(({ key }) => key);
+
+        const results = Array.from(
+          await resolve(keysWithoutIndex, getStaticFields(keysWithoutIndex[0]))
+        );
+
+        if (results.length !== keysForThisGroup.length)
+          throw new Error(
+            "the length of the array returned by resolve() must be equal to the length of the keys array"
+          );
+
+        const resultsWithIndex = results.map((result, index) => ({
           result,
-          hashedKey: staticFieldsObjectHash,
+          index: keysForThisGroup[index].index,
         }));
+
+        return resultsWithIndex;
       })
     );
 
-    const sortedResults = keys.map((key) => {
-      const hash = objectHash(getStaticFields(key));
-      const matchingResult = queryResultsPartitionedByFilter.find(
-        ({ hashedKey }) => hashedKey === hash
-      );
+    const flattened = queryResultsPartitionedByFilter.flat();
 
-      const out = matchingResult?.result;
-      return (
-        out ??
-        new Error(
-          `Your resolve function returned null or undefined for key: ${key}`
-        )
-      );
-    });
+    /**
+     * @type {Array<TValue | Error>}
+     */
+    const resultsOrderedInTheSameIndexesAsKeys = new Array(keys.length);
 
-    return sortedResults;
+    for (const { index, result } of flattened) {
+      resultsOrderedInTheSameIndexesAsKeys[index] = result;
+    }
+
+    return resultsOrderedInTheSameIndexesAsKeys;
   };
 
   return batchLoadFunction;

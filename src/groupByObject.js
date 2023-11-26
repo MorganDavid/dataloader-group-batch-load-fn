@@ -9,11 +9,11 @@ import { groupBy } from "./groupBy";
 /**
  * Same as _.groupBy but is able to group by objects using object-hash.
  * @template TKey
- * @param {ReadonlyArray<TKey>} object
+ * @param {ReadonlyArray<TKey>} objects
  * @param {((v: TKey) => Partial<TKey>)} getProperty - extract the object to group by
- * @returns {Object} - Dictionary of keys grouped by args for easy batch querying.
+ * @returns {Record<string, ReadonlyArray<{index:number, key:TKey}>>} - Dictionary of keys grouped by args for easy batch querying.
  */
-export const groupByObject = (object, getProperty) => {
+export const groupByObject = (objects, getProperty) => {
   /**
    * @param {TKey} v
    * @returns {string}
@@ -22,5 +22,5 @@ export const groupByObject = (object, getProperty) => {
     return objectHash(getProperty(v));
   };
 
-  return groupBy(object, hashObject);
+  return groupBy(objects, hashObject);
 };
