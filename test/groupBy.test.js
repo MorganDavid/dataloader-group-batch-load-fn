@@ -9,8 +9,15 @@ test("groupBy should group elements based on the iteratee function", () => {
   const result = groupBy(collection, iteratee);
 
   expect(result).toEqual({
-    odd: [1, 3, 5],
-    even: [2, 4],
+    odd: [
+      { indexInSourceArray: 0, value: 1 },
+      { indexInSourceArray: 2, value: 3 },
+      { indexInSourceArray: 4, value: 5 },
+    ],
+    even: [
+      { indexInSourceArray: 1, value: 2 },
+      { indexInSourceArray: 3, value: 4 },
+    ],
   });
 });
 
@@ -21,10 +28,13 @@ test("groupBy should group elements when an object is passed", () => {
   const result = groupBy(collection, iteratee);
 
   expect(result).toEqual({
-    1: [{ id: 1 }],
-    2: [{ id: "2" }],
-    3: [{ id: 3 }],
-    4: [{ id: 4 }, { id: 4 }],
+    1: [{ value: { id: 1 }, indexInSourceArray: 0 }],
+    2: [{ value: { id: "2" }, indexInSourceArray: 1 }],
+    3: [{ value: { id: 3 }, indexInSourceArray: 2 }],
+    4: [
+      { value: { id: 4 }, indexInSourceArray: 3 },
+      { value: { id: 4 }, indexInSourceArray: 4 },
+    ],
   });
 });
 

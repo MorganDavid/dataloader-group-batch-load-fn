@@ -111,6 +111,27 @@ describe("groupedBatchLoadFn", () => {
     );
   });
 
+  test("should behave normally when the keys are not objects", async () => {
+    const options = {
+      // this is just a normal dataloader batchLoadFn now, so we don't want to group anything.
+      getStaticFields: () => 1,
+    };
+
+    const normalResolver = vi.fn().mockImplementation(async (keys) => {
+      return keys;
+    });
+
+    const batchLoadFunction = groupedBatchLoadFn(normalResolver, options);
+
+    const keys = [1, 2, 3, 4, 5, 6];
+
+    const results = await batchLoadFunction(keys);
+
+    expect(results).toEqual(keys);
+    expect(normalResolver).toHaveBeenCalledTimes(1);
+    expect(normalResolver).toHaveBeenCalledWith(keys, 1);
+  });
+
   test("should work correctly with the DataLoader library", async () => {
     const { dataLoader, mockBatchLoadFunction, mockResolve } =
       constructDataLoaderWithMocks(

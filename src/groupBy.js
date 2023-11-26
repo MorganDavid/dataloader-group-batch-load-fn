@@ -1,24 +1,25 @@
 // @ts-check
 
 /**
- * @template TKey
- * @param {ReadonlyArray<TKey>} collection The collection to iterate over.
- * @param {(key:TKey) => object} iteratee The iteratee to transform keys.
- * @returns {Record<string, ReadonlyArray<{index:number, key:TKey}>>} Returns the composed aggregate object.
+ * similar to _.groupBy but also returns the index of the original object in `collection`.
+ * @template TValue
+ * @param {ReadonlyArray<TValue>} array The collection to iterate over.
+ * @param {(value:TValue) => object} iteratee The iteratee to transform keys.
+ * @returns {Record<string, ReadonlyArray<{indexInSourceArray:number, value:TValue}>>} Returns the composed aggregate object with the index of each `value` in the input `array`.
  */
-export function groupBy(collection, iteratee) {
-  if (typeof collection !== "object" || !collection?.length) return {};
+export function groupBy(array, iteratee) {
+  if (typeof array !== "object" || !array?.length) return {};
 
   /**
-   * @type {Record<string, ReadonlyArray<{index:number, key:TKey}>>}
+   * @type {Record<string, ReadonlyArray<{indexInSourceArray:number, value:TValue}>>}
    */
-  const grouped = collection.reduce((result, value, index) => {
+  const grouped = array.reduce((result, value, indexInSourceArray) => {
     const key = iteratee(value);
     const existing = result[key];
     if (existing) {
-      existing.push({ index, key: value });
+      existing.push({ indexInSourceArray, value });
     } else {
-      result[key] = [{ index, key: value }];
+      result[key] = [{ indexInSourceArray, value }];
     }
 
     return result;

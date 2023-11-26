@@ -17,10 +17,12 @@ describe("groupByObject", () => {
 
     expect(result).toEqual({
       [objectHash({ name: "John" })]: [
-        { id: 1, name: "John" },
-        { id: 3, name: "John" },
+        { value: { id: 1, name: "John" }, indexInSourceArray: 0 },
+        { value: { id: 3, name: "John" }, indexInSourceArray: 2 },
       ],
-      [objectHash({ name: "Jane" })]: [{ id: 2, name: "Jane" }],
+      [objectHash({ name: "Jane" })]: [
+        { value: { id: 2, name: "Jane" }, indexInSourceArray: 1 },
+      ],
     });
   });
 

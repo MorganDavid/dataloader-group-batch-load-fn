@@ -25,21 +25,21 @@ export const groupedBatchLoadFn = (resolve, options) => {
     const values = Object.values(grouped);
 
     const queryResultsPartitionedByFilter = await Promise.all(
-      values.map(async (keysForThisGroup) => {
-        const keysWithoutIndex = keysForThisGroup.map(({ key }) => key);
+      values.map(async (keysAndIndexesForThisGroup) => {
+        const keys = keysAndIndexesForThisGroup.map(({ value }) => value);
 
         const results = Array.from(
-          await resolve(keysWithoutIndex, getStaticFields(keysWithoutIndex[0]))
+          await resolve(keys, getStaticFields(keys[0]))
         );
 
-        if (results.length !== keysForThisGroup.length)
+        if (results.length !== keysAndIndexesForThisGroup.length)
           throw new Error(
             "the length of the array returned by resolve() must be equal to the length of the keys array"
           );
 
         const resultsWithIndex = results.map((result, index) => ({
           result,
-          index: keysForThisGroup[index].index,
+          indexInKeys: keysAndIndexesForThisGroup[index].indexInSourceArray,
         }));
 
         return resultsWithIndex;
@@ -53,8 +53,8 @@ export const groupedBatchLoadFn = (resolve, options) => {
      */
     const resultsOrderedInTheSameIndexesAsKeys = new Array(keys.length);
 
-    for (const { index, result } of flattened) {
-      resultsOrderedInTheSameIndexesAsKeys[index] = result;
+    for (const { indexInKeys, result } of flattened) {
+      resultsOrderedInTheSameIndexesAsKeys[indexInKeys] = result;
     }
 
     return resultsOrderedInTheSameIndexesAsKeys;

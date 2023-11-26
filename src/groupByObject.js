@@ -7,20 +7,20 @@ import { groupBy } from "./groupBy";
  */
 
 /**
- * Same as _.groupBy but is able to group by objects using object-hash.
- * @template TKey
- * @param {ReadonlyArray<TKey>} objects
- * @param {((v: TKey) => Partial<TKey>)} getProperty - extract the object to group by
- * @returns {Record<string, ReadonlyArray<{index:number, key:TKey}>>} - Dictionary of keys grouped by args for easy batch querying.
+ * Similar as _.groupBy but is able to group by objects using object-hash and also returns the index of the original object in `array`.
+ * @template TValue
+ * @param {ReadonlyArray<TValue>} array
+ * @param {((v: TValue) => Partial<TValue>)} getProperty - extract the object to group by
+ * @returns {Record<string, ReadonlyArray<{indexInSourceArray:number, value:TValue}>>} - Dictionary of keys grouped by args for easy batch querying.
  */
-export const groupByObject = (objects, getProperty) => {
+export const groupByObject = (array, getProperty) => {
   /**
-   * @param {TKey} v
+   * @param {TValue} v
    * @returns {string}
    */
   const hashObject = (v) => {
     return objectHash(getProperty(v));
   };
 
-  return groupBy(objects, hashObject);
+  return groupBy(array, hashObject);
 };
