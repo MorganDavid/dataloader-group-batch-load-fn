@@ -30,11 +30,15 @@ query {
 ## How to use
 Wrap your batchloadfn with the `groupBatchLoadFn`:
 ```ts
-// gets run once for every unique staticFields
-const batchLoadFn = groupBatchLoadFn((keys, staticFields) => {
-  const results = await db.query.from("enterprises").where("id", "in", keys.map(k => k.id)).where("role",staticFields.role);
-  return 
-}, {getStaticFields: (key) => ({role:key.role})})
+// gets run once for every unique staticFields with all the keys that match those staticFields
+const groupedBatchLoadFn = (keys, staticFields) => {
+  const results = await db.query.from("enterprises")
+    .where("id", "in", keys.map(k => k.id)).where("role",staticFields.role);
+  return results
+}
+
+const batchLoadFn = groupBatchLoadFn(groupedBatchLoadFn, {getStaticFields: (key) => ({role:key.role})})
+
 new DataLoader(batchLoadFn, {
   cacheKeyFn: (key) => objectHash(key),
 })
