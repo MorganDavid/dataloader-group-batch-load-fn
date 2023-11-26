@@ -1,5 +1,5 @@
 // @ts-check
-import { groupedBatchLoadFn } from "../src/groupedBatchLoadFn";
+import { groupBatchLoadFn } from "../src/groupBatchLoadFn";
 import { expect, test, describe, vi } from "vitest";
 import DataLoader from "dataloader";
 import objectHash from "object-hash";
@@ -39,7 +39,7 @@ describe("groupedBatchLoadFn", () => {
         status,
       }),
     };
-    const batchLoadFunction = groupedBatchLoadFn(
+    const batchLoadFunction = groupBatchLoadFn(
       mockGetProductsByOrderIdAndStatusResolver,
       options
     );
@@ -94,7 +94,7 @@ describe("groupedBatchLoadFn", () => {
     // returns results which don't match the length of keys
     const invalidResolver = async () => [1];
 
-    const batchLoadFunction = groupedBatchLoadFn(invalidResolver, options);
+    const batchLoadFunction = groupBatchLoadFn(invalidResolver, options);
 
     const keys = [
       { id: 1, status: "BOUGHT" },
@@ -121,7 +121,7 @@ describe("groupedBatchLoadFn", () => {
       return keys;
     });
 
-    const batchLoadFunction = groupedBatchLoadFn(normalResolver, options);
+    const batchLoadFunction = groupBatchLoadFn(normalResolver, options);
 
     const keys = [1, 2, 3, 4, 5, 6];
 
@@ -135,7 +135,7 @@ describe("groupedBatchLoadFn", () => {
   test("should work correctly with the DataLoader library", async () => {
     const { dataLoader, mockBatchLoadFunction, mockResolve } =
       constructDataLoaderWithMocks(
-        groupedBatchLoadFn,
+        groupBatchLoadFn,
         mockGetProductsByOrderIdAndStatusResolver
       );
 

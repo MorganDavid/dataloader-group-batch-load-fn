@@ -1,2 +1,1 @@
-export { groupByObject } from "./groupByObject";
-export { groupedBatchLoadFn } from "./groupedBatchLoadFn";
+export { groupBatchLoadFn as groupedBatchLoadFn } from "./groupBatchLoadFn";

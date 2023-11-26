@@ -3,12 +3,15 @@
 import { groupByObject } from "./groupByObject";
 
 /**
+ * Groups all keys passed to it by object hashing the result of `getStaticFields` on each key.
+ * Then, it calls and awaits `groupedBatchLoadFn` once for every group of keys.
  * @template TKey, TValue
- * @param {(keys: ArrayLike<TKey>, staticFields: Partial<TKey>) => Promise<ArrayLike<TValue | Error>>} resolve
- * @param {{ getStaticFields: (key: TKey) => Partial<TKey> }} options
- * @returns {BatchLoadFn<TKey, TValue>}
+ * @param {GroupedBatchLoadFn<TKey, TValue>} groupedBatchLoadFn Must return an array of results where each element in
+ *  the results corresponds to the element in the keys array with the same index.
+ * @param {Options<TKey>} options getStaticFields is required in options.
+ * @returns {BatchLoadFn<TKey, TValue>} A standard DataLoader BatchLoadFn to pass to a DataLoader constructor.
  */
-export const groupedBatchLoadFn = (resolve, options) => {
+export const groupBatchLoadFn = (groupedBatchLoadFn, options) => {
   if (!options) throw new Error("options missing");
 
   const { getStaticFields } = options;
@@ -17,19 +20,19 @@ export const groupedBatchLoadFn = (resolve, options) => {
     throw new Error("options.getStaticFields is not a function");
 
   /**
-   * @type {function(ReadonlyArray<TKey>): Promise<ArrayLike<TValue | Error>>}
+   * @type {BatchLoadFn<TKey, TValue>}
    */
   const batchLoadFunction = async (keys) => {
     const grouped = groupByObject(keys, getStaticFields);
 
     const values = Object.values(grouped);
 
-    const queryResultsPartitionedByFilter = await Promise.all(
+    const queryResultsGroupedByStaticFields = await Promise.all(
       values.map(async (keysAndIndexesForThisGroup) => {
         const keys = keysAndIndexesForThisGroup.map(({ value }) => value);
 
         const results = Array.from(
-          await resolve(keys, getStaticFields(keys[0]))
+          await groupedBatchLoadFn(keys, getStaticFields(keys[0]))
         );
 
         if (results.length !== keysAndIndexesForThisGroup.length)
@@ -46,7 +49,7 @@ export const groupedBatchLoadFn = (resolve, options) => {
       })
     );
 
-    const flattened = queryResultsPartitionedByFilter.flat();
+    const flattened = queryResultsGroupedByStaticFields.flat();
 
     /**
      * @type {Array<TValue | Error>}
