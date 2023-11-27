@@ -9,10 +9,7 @@ const { groupByObject } = require("./groupByObject");
  * @param {import(".").Options<TKey>} options getArgs is required in options.
  * @returns {import(".").BatchLoadFn<TKey, TValue>} A standard DataLoader BatchLoadFn to pass to a DataLoader constructor.
  */
-module.exports.groupBatchLoadFn = function groupBatchLoadFn(
-  groupedBatchLoadFn,
-  options
-) {
+function groupBatchLoadFn(groupedBatchLoadFn, options) {
   if (!options) throw new Error("options missing");
 
   const getArgs = options.getArgs;
@@ -67,4 +64,6 @@ module.exports.groupBatchLoadFn = function groupBatchLoadFn(
   };
 
   return batchLoadFunction;
-};
+}
+
+module.exports = { groupBatchLoadFn };

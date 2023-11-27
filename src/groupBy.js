@@ -7,7 +7,7 @@
  * @param {(value:TValue) => object} iteratee The iteratee to transform keys.
  * @returns {Record<string, ReadonlyArray<{indexInSourceArray:number, value:TValue}>>} Returns the composed aggregate object with the index of each `value` in the input `array`.
  */
-module.exports.groupBy = function groupBy(array, iteratee) {
+function groupBy(array, iteratee) {
   if (typeof array !== "object" || !array?.length) return {};
 
   /**
@@ -26,4 +26,6 @@ module.exports.groupBy = function groupBy(array, iteratee) {
   }, {});
 
   return grouped;
-};
+}
+
+module.exports = { groupBy };

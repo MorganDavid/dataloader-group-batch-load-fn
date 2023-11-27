@@ -9,7 +9,7 @@ const { groupBy } = require("./groupBy");
  * @param {((v: TValue) => Partial<TValue>)} getProperty - extract the object to group by
  * @returns {Record<string, ReadonlyArray<{indexInSourceArray:number, value:TValue}>>} - Dictionary of keys grouped by args for easy batch querying.
  */
-module.exports.groupByObject = function groupByObject(array, getProperty) {
+function groupByObject(array, getProperty) {
   /**
    * @param {TValue} v
    * @returns {string}
@@ -19,4 +19,6 @@ module.exports.groupByObject = function groupByObject(array, getProperty) {
   };
 
   return groupBy(array, hashObject);
-};
+}
+
+module.exports = { groupByObject };
