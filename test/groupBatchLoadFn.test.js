@@ -16,13 +16,12 @@ const products = {
   9: { id: 8, status: "SOLD", orderId: 4 },
 };
 
-const getProductsByOrderIdAndStatusResolver = async (keys, staticFields) => {
+const getProductsByOrderIdAndStatusResolver = async (keys, args) => {
   // a query to the datastore would go here.
   // static fields are fields which are the same for every value of `keys`
   const resultsInTheSameOrderAsKeys = keys.map((key) =>
     Object.values(products).filter(
-      (product) =>
-        product.status === staticFields.status && key.id === product.orderId
+      (product) => product.status === args.status && key.id === product.orderId
     )
   );
   return resultsInTheSameOrderAsKeys;
@@ -32,10 +31,10 @@ const mockGetProductsByOrderIdAndStatusResolver = vi
   .fn()
   .mockImplementation(getProductsByOrderIdAndStatusResolver);
 
-describe("groupedBatchLoadFn", () => {
+describe("groupBatchLoadFn", () => {
   test("should group and resolve keys correctly", async () => {
     const options = {
-      getStaticFields: ({ status }) => ({
+      getArgs: ({ status }) => ({
         status,
       }),
     };
@@ -86,7 +85,7 @@ describe("groupedBatchLoadFn", () => {
 
   test("should return an error when the provided resolve function does not return an array with the same length as keys", async () => {
     const options = {
-      getStaticFields: ({ status }) => ({
+      getArgs: ({ status }) => ({
         status,
       }),
     };
@@ -114,7 +113,7 @@ describe("groupedBatchLoadFn", () => {
   test("should behave normally when the keys are not objects", async () => {
     const options = {
       // this is just a normal dataloader batchLoadFn now, so we don't want to group anything.
-      getStaticFields: () => 1,
+      getArgs: () => 1,
     };
 
     const normalResolver = vi.fn().mockImplementation(async (keys) => {
@@ -195,7 +194,7 @@ describe("groupedBatchLoadFn", () => {
 
 const constructDataLoaderWithMocks = (groupedBatchLoadFn, resolve) => {
   const options = {
-    getStaticFields: ({ status }) => ({
+    getArgs: ({ status }) => ({
       status,
     }),
   };

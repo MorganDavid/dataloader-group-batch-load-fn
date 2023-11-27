@@ -1,4 +1,6 @@
-export { groupBatchLoadFn } from "./groupBatchLoadFn";
+import { groupBatchLoadFn } from "./groupBatchLoadFn";
+
+module.exports = { groupBatchLoadFn };
 
 /**
  * @template TKey, TValue
@@ -11,17 +13,17 @@ export { groupBatchLoadFn } from "./groupBatchLoadFn";
  * @template TKey, TValue
  * @callback GroupedBatchLoadFn
  * @param {Array<TKey>} keys
- * @param {Partial<TKey>} staticFields
+ * @param {Partial<TKey>} args
  * @returns {Promise<ArrayLike<TValue | Error>>}
  */
 /**
  * @template TKey
- * @callback GetStaticFields
+ * @callback getArgs
  * @param {TKey} key
  * @returns {Partial<TKey>}
  */
 /**
  * @template TKey
  * @typedef {Object} Options
- * @property {GetStaticFields<TKey>} getStaticFields
+ * @property {getArgs<TKey>} getArgs
  */
