@@ -1,5 +1,5 @@
 // @ts-check
-import { groupByObject } from "./groupByObject";
+const { groupByObject } = require("./groupByObject");
 
 /**
  * Groups all keys passed to it by object-hashing the result of `getArgs` on each key.
@@ -9,7 +9,10 @@ import { groupByObject } from "./groupByObject";
  * @param {import(".").Options<TKey>} options getArgs is required in options.
  * @returns {import(".").BatchLoadFn<TKey, TValue>} A standard DataLoader BatchLoadFn to pass to a DataLoader constructor.
  */
-export function groupBatchLoadFn(groupedBatchLoadFn, options) {
+module.exports.groupBatchLoadFn = function groupBatchLoadFn(
+  groupedBatchLoadFn,
+  options
+) {
   if (!options) throw new Error("options missing");
 
   const getArgs = options.getArgs;
@@ -64,4 +67,4 @@ export function groupBatchLoadFn(groupedBatchLoadFn, options) {
   };
 
   return batchLoadFunction;
-}
+};

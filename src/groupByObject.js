@@ -1,6 +1,6 @@
 // @ts-check
-import objectHash from "object-hash";
-import { groupBy } from "./groupBy";
+const objectHash = require("object-hash");
+const { groupBy } = require("./groupBy");
 
 /**
  * Similar as _.groupBy but is able to group by objects using object-hash and also returns the index of the original object in `array`.
@@ -9,7 +9,7 @@ import { groupBy } from "./groupBy";
  * @param {((v: TValue) => Partial<TValue>)} getProperty - extract the object to group by
  * @returns {Record<string, ReadonlyArray<{indexInSourceArray:number, value:TValue}>>} - Dictionary of keys grouped by args for easy batch querying.
  */
-export function groupByObject(array, getProperty) {
+module.exports.groupByObject = function groupByObject(array, getProperty) {
   /**
    * @param {TValue} v
    * @returns {string}
@@ -19,4 +19,4 @@ export function groupByObject(array, getProperty) {
   };
 
   return groupBy(array, hashObject);
-}
+};

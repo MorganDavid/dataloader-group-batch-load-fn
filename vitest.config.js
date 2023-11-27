@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig } from "vitest/config";
+const { defineConfig } = require("vitest/config");
 
 export default defineConfig({
   test: {

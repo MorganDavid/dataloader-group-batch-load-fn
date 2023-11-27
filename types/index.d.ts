@@ -4,3 +4,4 @@ export type getArgs<TKey> = (key: TKey) => Partial<TKey>;
 export type Options<TKey> = {
     getArgs: getArgs<TKey>;
 };
+export const groupBatchLoadFn: <TKey, TValue>(groupedBatchLoadFn: GroupedBatchLoadFn<TKey, TValue>, options: Options<TKey>) => BatchLoadFn<TKey, TValue>;

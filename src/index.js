@@ -1,4 +1,4 @@
-import { groupBatchLoadFn } from "./groupBatchLoadFn";
+const { groupBatchLoadFn } = require("./groupBatchLoadFn");
 
 module.exports = { groupBatchLoadFn };
 
